@@ -16,6 +16,7 @@ package db
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"path"
 	"testing"
@@ -47,7 +48,7 @@ func TestIndex_DropIndex(t *testing.T) {
 	indexFilesAfterDelete, err := getIndexFilenames(dirName, class.Class)
 	require.Nil(t, err)
 
-	assert.Equal(t, 6, len(indexFilesBeforeDelete))
+	assert.Equal(t, 5, len(indexFilesBeforeDelete))
 	assert.Equal(t, 0, len(indexFilesAfterDelete))
 }
 
@@ -71,9 +72,9 @@ func TestIndex_DropEmptyAndRecreateEmptyIndex(t *testing.T) {
 	indexFilesAfterRecreate, err := getIndexFilenames(dirName, class.Class)
 	require.Nil(t, err)
 
-	assert.Equal(t, 6, len(indexFilesBeforeDelete))
+	assert.Equal(t, 5, len(indexFilesBeforeDelete))
 	assert.Equal(t, 0, len(indexFilesAfterDelete))
-	assert.Equal(t, 6, len(indexFilesAfterRecreate))
+	assert.Equal(t, 5, len(indexFilesAfterRecreate))
 
 	err = index.drop()
 	require.Nil(t, err)
@@ -121,9 +122,6 @@ func TestIndex_DropWithDataAndRecreateWithDataIndex(t *testing.T) {
 		{"name": "one"},
 		{"name": "two"},
 	}
-
-	err = index.addUUIDProperty(context.TODO())
-	require.Nil(t, err)
 
 	err = index.addProperty(context.TODO(), &models.Property{
 		Name:         "name",
@@ -174,8 +172,6 @@ func TestIndex_DropWithDataAndRecreateWithDataIndex(t *testing.T) {
 		}, nil, logger, nil, nil, nil, nil, class, nil, nil, nil)
 	require.Nil(t, err)
 
-	err = index.addUUIDProperty(context.TODO())
-	require.Nil(t, err)
 	err = index.addProperty(context.TODO(), &models.Property{
 		Name:         "name",
 		DataType:     schema.DataTypeText.PropString(),
@@ -226,9 +222,9 @@ func TestIndex_DropWithDataAndRecreateWithDataIndex(t *testing.T) {
 	require.True(t, ok)
 	require.Equal(t, 99, afterVectorConfig.EF)
 
-	assert.Equal(t, 6, len(indexFilesBeforeDelete))
+	assert.Equal(t, 5, len(indexFilesBeforeDelete))
 	assert.Equal(t, 0, len(indexFilesAfterDelete))
-	assert.Equal(t, 6, len(indexFilesAfterRecreate))
+	assert.Equal(t, 5, len(indexFilesAfterRecreate))
 	assert.Equal(t, indexFilesBeforeDelete, indexFilesAfterRecreate)
 	assert.NotNil(t, beforeDeleteObj1)
 	assert.NotNil(t, beforeDeleteObj2)
@@ -293,9 +289,6 @@ func TestIndex_DropReadOnlyIndexWithData(t *testing.T) {
 		{"name": "one"},
 		{"name": "two"},
 	}
-
-	err = index.addUUIDProperty(ctx)
-	require.Nil(t, err)
 
 	err = index.addProperty(ctx, &models.Property{
 		Name:         "name",
@@ -364,6 +357,9 @@ func getIndexFilenames(rootDir, indexName string) ([]string, error) {
 			return filenames, nil
 		}
 		return nil, err
+	}
+	if len(indexRoot) == 0 {
+		return nil, fmt.Errorf("index root length is 0")
 	}
 	shardFiles, err := os.ReadDir(path.Join(rootDir, indexName, indexRoot[0].Name()))
 	if err != nil {
